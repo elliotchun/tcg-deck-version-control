@@ -1,4 +1,5 @@
 import { describe, beforeEach, expect, test } from "bun:test";
+import Deck from "./src/deck";
 
 describe("DeckState", () => {
     let deck: Deck;
