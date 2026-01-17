@@ -1,3 +1,5 @@
+import type { BunFile } from "bun";
+
 type TDeck = Record<string, number>
 type TCardName = string
 
@@ -37,20 +39,22 @@ export default class Deck {
         return this.#deck[name] || 0
     }
 
-    saveToDisk(fileName: string) {
-        Object.entries(this.#deck).forEach(entry => {
-            const [cardName, quantity] = entry;
-
-        });
-
-
+    async saveToDisk(path: string) {
+        await Bun.write(Bun.file(path),
+            Object.entries(this.#deck)
+                .map(entry => {
+                    const [cardName, quantity] = entry;
+                    return `${quantity} ${cardName}`
+                })
+                .join("\n")
+        );
     }
 
-    static async loadFromFile(path: string): Promise<Deck> {
+    static async loadFromFile(file: BunFile): Promise<Deck> {
         const resultDeck = new Deck();
-        const file = Bun.file(path);
         const fileText = await file.text();
         for (const line of fileText.split("\n")) {
+            if (!line) break;
             const entry = this.parseString(line);
             resultDeck.addCard(entry.cardName, entry.quantity);
         }

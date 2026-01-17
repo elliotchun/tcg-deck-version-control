@@ -66,17 +66,21 @@ describe("Deck disk operations", () => {
     })
 
     test("Save and load deck", async () => {
-        deck.saveToDisk(tempDeckPath());
+        await deck.saveToDisk(tempDeckPath());
         const deckFile = Bun.file(tempDeckPath());
         expect(await Deck.loadFromFile(deckFile)).toBeTypeOf("object");
 
+        
+    });
+
+    test("Save and load an empty deck", async () => {
         deck.addCard("Island", 10);
         deck.addCard("Mountain", 10);
-        deck.saveToDisk(testDirName + deckFileName);
+        await deck.saveToDisk(tempDeckPath());
         const loadedDeck: Deck = await Deck.loadFromFile(Bun.file(tempDeckPath()));
         expect(loadedDeck.numberOf("Island")).toBe(10);
         expect(loadedDeck.numberOf("Mountain")).toBe(10);
-    });
+    })
 });
 
 describe("Deck list parsing", () => {
