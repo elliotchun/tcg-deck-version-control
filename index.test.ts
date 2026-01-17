@@ -1,9 +1,8 @@
-import { describe, beforeEach, expect, test } from "bun:test";
+import { describe, beforeEach, afterEach, expect, test } from "bun:test";
 import { Deck, TransactionalDeck } from "./src/deck";
 import { tmpdir } from "node:os"
 import { mkdtempSync, rmSync } from "node:fs"
 import path from "node:path";
-import { afterEach } from "node:test";
 
 describe("Atomic operations on deck", () => {
     let deck: Deck;
@@ -132,4 +131,4 @@ describe("Transactional deck tests", () => {
         expect(deck.getStateIndex()).toBe(previousState + 1);
         expect(deck.getState(previousState).numberOf("Mountain")).toBe(4);
     })
-})
+});

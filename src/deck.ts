@@ -38,14 +38,7 @@ export class Deck {
     }
 
     async saveToDisk(path: string) {
-        await Bun.write(Bun.file(path),
-            Object.entries(this.#deck)
-                .map(entry => {
-                    const [cardName, quantity] = entry;
-                    return `${quantity} ${cardName}`
-                })
-                .join("\n")
-        );
+        await Bun.write(Bun.file(path), this.toString());
     }
 
     static async loadFromFile(file: BunFile): Promise<Deck> {
@@ -98,6 +91,14 @@ export class Deck {
             quantity: parsedQuantity,
             cardName: parsedCardName,
         }
+    }
+    toString(sep = "\n"): string {
+        return Object.entries(this.#deck)
+            .map(entry => {
+                const [cardName, quantity] = entry;
+                return `${quantity} ${cardName}`
+            })
+            .join(sep);
     }
 }
 
