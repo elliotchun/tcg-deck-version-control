@@ -1,5 +1,5 @@
 import { describe, beforeEach, expect, test } from "bun:test";
-import Deck from "./src/deck";
+import { Deck, TransactionalDeck } from "./src/deck";
 import { tmpdir } from "node:os"
 import { mkdtempSync, rmSync } from "node:fs"
 import path from "node:path";
@@ -116,10 +116,10 @@ describe("Deck list parsing", () => {
 });
 
 describe("Transactional deck tests", () => {
-    let deck: Deck;
+    let deck: TransactionalDeck;
 
     beforeEach(() => {
-        deck = new Deck();
+        deck = new TransactionalDeck();
     });
 
     test("Able to get state of previous deck iterations", () => {
@@ -129,6 +129,7 @@ describe("Transactional deck tests", () => {
 
         expect(deck.numberOf("Mountain")).toBe(0);
 
-        expect(deck.getPreviousState(previousState).numberOf("Mountain")).toBe(4);
+        expect(deck.getStateIndex()).toBe(previousState + 1);
+        expect(deck.getState(previousState).numberOf("Mountain")).toBe(4);
     })
 })

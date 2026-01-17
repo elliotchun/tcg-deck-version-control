@@ -1,17 +1,18 @@
 import type { BunFile } from "bun";
+import { TransactionManager } from "./transaction-manager";
 
 type TDeck = Record<string, number>
 type TCardName = string
 
-interface IDeckEntry {
-    quantity: number,
-    cardName: TCardName,
-    setCode?: string,
-    collectorCode?: number,
-    finish?: string,
+export interface IDeckEntry {
+    quantity: number;
+    cardName: TCardName;
+    setCode?: string;
+    collectorCode?: number;
+    finish?: string;
 }
 
-export default class Deck {
+export class Deck {
     #deck: TDeck;
 
     constructor() {
@@ -97,5 +98,54 @@ export default class Deck {
             quantity: parsedQuantity,
             cardName: parsedCardName,
         }
+    }
+}
+
+export class TransactionalDeck extends Deck {
+    #transactionManager: TransactionManager;
+
+    constructor() {
+        super();
+        this.#transactionManager = new TransactionManager();
+    }
+    override addCard(name: TCardName, quantity = 1) {
+        super.addCard(name, quantity);
+        this.#transactionManager.applyTransaction({
+            type: "Add",
+            entry: {
+                cardName: name,
+                quantity: quantity,
+            },
+            timestamp: Date.now(),
+        });
+    }
+    override removeCard(name: TCardName, quantity = 1) {
+        super.removeCard(name, quantity);
+        this.#transactionManager.applyTransaction({
+            type: "Remove",
+            entry: {
+                cardName: name,
+                quantity: quantity,
+            },
+            timestamp: Date.now(),
+        });
+    }
+
+    getStateIndex(): number {
+        return this.#transactionManager.getStateIndex();
+    }
+    getState(stateIndex: number): Deck {
+        const result = new Deck();
+        for (const transaction of this.#transactionManager.getTransactions().slice(0, stateIndex)) {
+            switch (transaction.type) {
+                case "Add":
+                    result.addCard(transaction.entry.cardName, transaction.entry.quantity);
+                    break;
+                case "Remove":
+                    result.removeCard(transaction.entry.cardName, transaction.entry.quantity);
+                    break;
+            }
+        }
+        return result;
     }
 }
