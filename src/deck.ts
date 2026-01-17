@@ -2,7 +2,7 @@ import type { BunFile } from "bun";
 import { TransactionManager } from "./transaction-manager";
 
 type TDeck = Record<string, number>
-type TCardName = string
+export type TCardName = string
 
 export interface IDeckEntry {
     quantity: number;
