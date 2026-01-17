@@ -136,6 +136,7 @@ export class TransactionalDeck extends Deck {
         return this.#transactionManager.getStateIndex();
     }
     getState(stateIndex: number): Deck {
+        if (stateIndex > this.#transactionManager.getTransactions().length) throw new Error("Index out of bounds");
         const result = new Deck();
         for (const transaction of this.#transactionManager.getTransactions().slice(0, stateIndex)) {
             switch (transaction.type) {

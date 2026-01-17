@@ -130,5 +130,10 @@ describe("Transactional deck tests", () => {
 
         expect(deck.getStateIndex()).toBe(previousState + 1);
         expect(deck.getState(previousState).numberOf("Mountain")).toBe(4);
-    })
+    });
+
+    test("Edge case: OOB state index", () => {
+        deck.addCard("Mountain", 4);
+        expect(() => deck.getState(2)).toThrow();
+    });
 });
