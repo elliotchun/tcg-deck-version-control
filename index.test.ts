@@ -1,7 +1,11 @@
 import { describe, beforeEach, expect, test } from "bun:test";
 import Deck from "./src/deck";
+import { tmpdir } from "node:os"
+import { mkdtempSync, rmSync } from "node:fs"
+import path from "node:path";
+import { afterEach } from "node:test";
 
-describe("DeckState", () => {
+describe("Atomic operations on deck", () => {
     let deck: Deck;
 
     beforeEach(() => {
@@ -33,7 +37,7 @@ describe("DeckState", () => {
 
         deck.addCard("Island", 3);
         expect(deck.numberOfCards()).toBe(3);
-        
+
         deck.removeCard("Island", 3);
         expect(deck.numberOfCards()).toBe(0);
     });
@@ -44,3 +48,65 @@ describe("DeckState", () => {
         expect(deck.numberOfCards()).toBe(0);
     });
 });
+
+describe("Deck disk operations", () => {
+    const deckFileName = "deck.txt";
+    let testDirName = "";
+    let deck: Deck;
+
+    const tempDeckPath = () => path.join(testDirName, deckFileName);
+
+    beforeEach(() => {
+        testDirName = mkdtempSync(path.join(tmpdir(), "deck-test-"));
+        deck = new Deck();
+    });
+
+    afterEach(() => {
+        rmSync(testDirName, { recursive: true, force: true });
+    })
+
+    test("Save and load deck", async () => {
+        deck.saveToDisk(tempDeckPath());
+        const deckFile = Bun.file(tempDeckPath());
+        expect(await Deck.loadFromFile(deckFile)).toBeTypeOf("object");
+
+        deck.addCard("Island", 10);
+        deck.addCard("Mountain", 10);
+        deck.saveToDisk(testDirName + deckFileName);
+        const loadedDeck: Deck = await Deck.loadFromFile(Bun.file(tempDeckPath()));
+        expect(loadedDeck.numberOf("Island")).toBe(10);
+        expect(loadedDeck.numberOf("Mountain")).toBe(10);
+    });
+});
+
+describe("Deck list parsing", () => {
+    test("Simple parse", () => {
+        const testString = "1 And They Shall Know No Fear";
+
+        const parsedString = Deck.parseString(testString);
+        expect(parsedString.quantity).toBe(1);
+        expect(parsedString.cardName).toBe("And They Shall Know No Fear");
+    });
+
+    test("Parse with set, without finish", () => {
+        const testString = "1 Reaver Titan (40K) 163";
+
+        const parsedString = Deck.parseStringWithSet(testString);
+        expect(parsedString.quantity).toBe(1);
+        expect(parsedString.cardName).toBe("Reaver Titan");
+        expect(parsedString.setCode).toBe("40K");
+        expect(parsedString.collectorCode).toBe(163);
+        expect(parsedString.finish).toBeUndefined();
+    });
+
+    test("Parse with set, with finish", () => {
+        const testString = "1 Marneus Calgar (40K) 8 *F*";
+
+        const parsedString = Deck.parseStringWithSet(testString);
+        expect(parsedString.quantity).toBe(1);
+        expect(parsedString.cardName).toBe("Marneus Calgar");
+        expect(parsedString.setCode).toBe("40K");
+        expect(parsedString.collectorCode).toBe(8);
+        expect(parsedString.finish).toBe("*F*")
+    });
+})
