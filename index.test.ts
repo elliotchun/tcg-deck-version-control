@@ -95,7 +95,7 @@ describe("Deck list parsing", () => {
     test("Parse with set, without finish", () => {
         const testString = "1 Reaver Titan (40K) 163";
 
-        const parsedString = Deck.parseStringWithSet(testString);
+        const parsedString = Deck.parseString(testString);
         expect(parsedString.quantity).toBe(1);
         expect(parsedString.cardName).toBe("Reaver Titan");
         expect(parsedString.setCode).toBe("40K");
@@ -106,11 +106,29 @@ describe("Deck list parsing", () => {
     test("Parse with set, with finish", () => {
         const testString = "1 Marneus Calgar (40K) 8 *F*";
 
-        const parsedString = Deck.parseStringWithSet(testString);
+        const parsedString = Deck.parseString(testString);
         expect(parsedString.quantity).toBe(1);
         expect(parsedString.cardName).toBe("Marneus Calgar");
         expect(parsedString.setCode).toBe("40K");
         expect(parsedString.collectorCode).toBe(8);
         expect(parsedString.finish).toBe("*F*")
     });
+});
+
+describe("Transactional deck tests", () => {
+    let deck: Deck;
+
+    beforeEach(() => {
+        deck = new Deck();
+    });
+
+    test("Able to get state of previous deck iterations", () => {
+        deck.addCard("Mountain", 4);
+        const previousState = deck.getStateIndex();
+        deck.removeCard("Mountain", 4);
+
+        expect(deck.numberOf("Mountain")).toBe(0);
+
+        expect(deck.getPreviousState(previousState).numberOf("Mountain")).toBe(4);
+    })
 })
