@@ -1,4 +1,4 @@
-# knowledge-pool
+# tcg-deck-version-control
 
 To install dependencies:
 
