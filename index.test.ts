@@ -64,15 +64,13 @@ describe("Deck disk operations", () => {
         rmSync(testDirName, { recursive: true, force: true });
     })
 
-    test("Save and load deck", async () => {
+    test("Save and load an empty deck", async () => {
         await deck.saveToDisk(tempDeckPath());
         const deckFile = Bun.file(tempDeckPath());
         expect(await Deck.loadFromFile(deckFile)).toBeTypeOf("object");
-
-        
     });
 
-    test("Save and load an empty deck", async () => {
+    test("Save and load a deck with cards", async () => {
         deck.addCard("Island", 10);
         deck.addCard("Mountain", 10);
         await deck.saveToDisk(tempDeckPath());
@@ -135,5 +133,22 @@ describe("Transactional deck tests", () => {
     test("Edge case: OOB state index", () => {
         deck.addCard("Mountain", 4);
         expect(() => deck.getState(2)).toThrow();
+    });
+
+    test("Save and load deck", async () => {
+        const deckFileName = "deck.txt";
+        const testDirName = mkdtempSync(path.join(tmpdir(), "deck-test-"));
+        const tempDeckPath = path.join(testDirName, deckFileName);
+
+        deck.addCard("Island", 10);
+        deck.addCard("Mountain", 10);
+        const previousStateIndex = deck.getStateIndex();
+        await deck.saveToDisk(tempDeckPath);
+
+        const loadedDeck: TransactionalDeck = await TransactionalDeck.loadFromFile(Bun.file(tempDeckPath));
+        expect(loadedDeck.numberOf("Island")).toBe(10);
+        expect(loadedDeck.numberOf("Mountain")).toBe(10);
+        expect(loadedDeck.getStateIndex()).toEqual(previousStateIndex);
+        rmSync(testDirName, { recursive: true, force: true });
     });
 });
