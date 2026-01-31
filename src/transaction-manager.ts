@@ -18,4 +18,8 @@ export class TransactionManager {
     getStateIndex() {
         return this.#transactions.length;
     }
+
+    toString() {
+        return JSON.stringify(this.#transactions);
+    }
 }

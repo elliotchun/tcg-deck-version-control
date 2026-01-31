@@ -3,6 +3,8 @@ import { Deck, TransactionalDeck } from "./src/deck";
 import { tmpdir } from "node:os"
 import { mkdtempSync, rmSync } from "node:fs"
 import path from "node:path";
+import { TransactionManager } from "./src/transaction-manager";
+import type { Transaction } from "./src/transaction";
 
 describe("Atomic operations on deck", () => {
     let deck: Deck;
@@ -150,5 +152,25 @@ describe("Transactional deck tests", () => {
         expect(loadedDeck.numberOf("Mountain")).toBe(10);
         expect(loadedDeck.getStateIndex()).toEqual(previousStateIndex);
         rmSync(testDirName, { recursive: true, force: true });
+    });
+});
+
+describe("Transaction tests", () => {
+    test("String representation of TransactionManager", () => {
+        const transactionManager = new TransactionManager();
+        let parsedTransactionManager = JSON.parse(transactionManager.toString());
+        expect(parsedTransactionManager).toBeArrayOfSize(0);
+        const transaction: Transaction = {
+            type: "Add",
+            entry: {
+                quantity: 10,
+                cardName: "Island",
+            },
+            timestamp: Date.now(),
+        };
+        transactionManager.applyTransaction(transaction);
+        parsedTransactionManager = JSON.parse(transactionManager.toString());
+        expect(parsedTransactionManager).toBeArrayOfSize(1);
+        expect(parsedTransactionManager[0]).toEqual(transaction);
     });
 });
