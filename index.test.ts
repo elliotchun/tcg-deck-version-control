@@ -68,15 +68,14 @@ describe("Deck disk operations", () => {
 
     test("Save and load an empty deck", async () => {
         await deck.saveToDisk(tempDeckPath());
-        const deckFile = Bun.file(tempDeckPath());
-        expect(await Deck.loadFromFile(deckFile)).toBeTypeOf("object");
+        expect(await Deck.loadFromDisk(tempDeckPath())).toBeTypeOf("object");
     });
 
     test("Save and load a deck with cards", async () => {
         deck.addCard("Island", 10);
         deck.addCard("Mountain", 10);
         await deck.saveToDisk(tempDeckPath());
-        const loadedDeck: Deck = await Deck.loadFromFile(Bun.file(tempDeckPath()));
+        const loadedDeck: Deck = await Deck.loadFromDisk(tempDeckPath());
         expect(loadedDeck.numberOf("Island")).toBe(10);
         expect(loadedDeck.numberOf("Mountain")).toBe(10);
     })
@@ -147,7 +146,7 @@ describe("Transactional deck tests", () => {
         const previousStateIndex = deck.getStateIndex();
         await deck.saveToDisk(tempDeckPath);
 
-        const loadedDeck: TransactionalDeck = await TransactionalDeck.loadFromFile(Bun.file(tempDeckPath));
+        const loadedDeck: TransactionalDeck = await TransactionalDeck.loadFromDisk(tempDeckPath);
         expect(loadedDeck.numberOf("Island")).toBe(10);
         expect(loadedDeck.numberOf("Mountain")).toBe(10);
         expect(loadedDeck.getStateIndex()).toEqual(previousStateIndex);

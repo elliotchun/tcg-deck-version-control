@@ -1,5 +1,6 @@
 import type { BunFile } from "bun";
 import { TransactionManager } from "./transaction-manager";
+import type { Transaction } from "./transaction";
 
 type TDeck = Record<string, number>
 export type TCardName = string
@@ -41,9 +42,9 @@ export class Deck {
         await Bun.write(Bun.file(path), this.toString());
     }
 
-    static async loadFromFile(file: BunFile): Promise<Deck> {
+    static async loadFromDisk(path: string): Promise<Deck> {
         const resultDeck = new Deck();
-        const fileText = await file.text();
+        const fileText = await Bun.file(path).text();
         for (const line of fileText.split("\n")) {
             if (!line) break;
             const entry = this.parseString(line);
@@ -132,6 +133,25 @@ export class TransactionalDeck extends Deck {
         });
     }
 
+    static transactionHistoryFileName(path: string) {
+        return `${path}.history`;
+    }
+
+    override async saveToDisk(path: string) {
+        super.saveToDisk(path);
+        await Bun.write(Bun.file(TransactionalDeck.transactionHistoryFileName(path)), this.#transactionManager.toString());
+    }
+
+    static override async loadFromDisk(path: string): Promise<TransactionalDeck> {
+        const deck = new TransactionalDeck();
+        const transctionHistory = await Bun.file(TransactionalDeck.transactionHistoryFileName(path)).json();
+        for (const transaction of transctionHistory) {
+            deck.#applyTransaction(transaction);
+        }
+
+        return deck;
+    }
+
     getStateIndex(): number {
         return this.#transactionManager.getStateIndex();
     }
@@ -149,5 +169,19 @@ export class TransactionalDeck extends Deck {
             }
         }
         return result;
+    }
+
+    #applyTransaction(transaction: Transaction) {
+        this.#transactionManager.applyTransaction(transaction);
+        switch (transaction.type) {
+            case "Add":
+                super.addCard(transaction.entry.cardName, transaction.entry.quantity);
+                break;
+            case "Remove":
+                super.removeCard(transaction.entry.cardName, transaction.entry.quantity);
+                break;
+            default:
+                throw new Error("Invalid/Unimplemented transaction type");
+        }
     }
 }
